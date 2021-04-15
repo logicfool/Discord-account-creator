@@ -68,6 +68,9 @@ Note:
 
 - This only uses one chrome window.
 
+#### Bugs (That I know)
+- Email verification Stops due to some error (probably scraping)
+
 #### TROUBLESHOOT
 
 ONLY IF IT IS NOT WORKING
