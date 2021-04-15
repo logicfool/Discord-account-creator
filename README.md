@@ -82,5 +82,5 @@ Where can i found my generated accounts?
 It is located in the output folder. Open up login.txt to see the accounts
 that has been generated.
 
-####Additional
+#### Additional
 - I am aware of methods to competely bypass both Hcaptcha and ReCaptcha But I refrain from putting it in the code as this repo is for educational purposes and I would not want spammers to be able to bypass captchas and use this service for not so legal ways
