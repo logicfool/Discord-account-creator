@@ -1,6 +1,8 @@
-import undetected_chromedriver as uc
-uc.install()
+"""import undetected_chromedriver as uc
+uc.install()""" #Might not be handy to use in latest versions
 
+from selenium.webdriver.remote import webelement
+from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time 
 import requests
@@ -11,7 +13,8 @@ import threading
 import datetime
 import re
 from bs4 import BeautifulSoup
-from selenium import webdriver
+#from selenium import webdriver 
+from seleniumwire import webdriver 
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,11 +23,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC  
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from dateutil import relativedelta
 from colorama import Fore, Style, init 
 from bs4 import BeautifulSoup as soup
-from sys import stdout
 from src import UI
 from src import GmailnatorRead, GmailnatorGet, dfilter_email, pfilter_email, find_email_type
+import platform
+
 
 init(convert=True)
 
@@ -44,11 +49,35 @@ def password_gen(length=8, chars= string.ascii_letters + string.digits + string.
 
 def gather_proxy():
         proxies = []
-        with open('config/proxies.txt', 'r', encoding='UTF-8') as file:
-            lines = file.readlines()
-            for line in lines:
-                proxies.append(line.replace('\n', ''))
+        try:
+            with open('config/proxies.txt', 'r', encoding='UTF-8') as file:
+                lines = file.readlines()
+                for line in lines:
+                    proxies.append(line.replace('\n', ''))
+        except FileNotFoundError:
+            proxies = []
+
         return proxies
+
+def generate_random_date(): #get a 18 plus years date!
+    time_difference = 0
+    random_date = None
+    while time_difference < 18:
+        start_date = datetime.date(1990, 1, 1)
+        end_date = datetime.date(2020, 2, 1)
+        time_between_dates = end_date - start_date
+        days_between_dates = time_between_dates.days
+        random_number_of_days = random.randrange(days_between_dates)
+        random_date = start_date + datetime.timedelta(days=random_number_of_days)
+        time_difference = relativedelta.relativedelta(datetime.datetime.now(),random_date).years
+    #return random_date,str(random_date).split('-') 
+    #Multi Format Date above Changing it to Discords Format
+    dob = random_date,str(random_date).split('-')
+    month = dob[0].strftime('%B')
+    year = str(dob[1][0])
+    day = str(int(dob[1][2]))
+    return month,day,year
+
 
 def free_print(arg):
     lock.acquire()
@@ -60,18 +89,42 @@ class DiscordGen:
     def __init__(self, email, username, password, proxy=None):
         options = webdriver.ChromeOptions()
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
-
+        self.seleniumwire_options = {'proxy': {
+            'http': proxy,
+            'https': proxy
+            }
+        }
+        """if proxy:
+            options.add_argument('--proxy-server=%s' % proxy)"""
+        self.platform = platform.system() #Support for linux system
+        """if self.platform == 'Windows':
+            self.driver = webdriver.Chrome(options=options, executable_path=r"chromedriver.exe")
+        else:
+            self.driver = webdriver.Chrome(options=options, executable_path=r"chromedriver")"""
+        #Webdrivermanager install chromedriver binary as per system's platform
         if proxy:
-            options.add_argument('--proxy-server=%s' % proxy)
+            #check if proxy is working and also update timezone as per proxy to avoid detection
+            try:
+                self.timezone = requests.get('http://ip-api.com/json',proxies = self.seleniumwire_options['proxy'],timeout = 10).json()['timezone']
+                self.tz_params = {'timezoneId': self.timezone}
+                self.driver = webdriver.Chrome(options = options,executable_path = ChromeDriverManager().install(),seleniumwire_options=self.seleniumwire_options)
 
-        self.driver = webdriver.Chrome(options=options, executable_path=r"chromedriver.exe")
-
+            except:
+                self.timezone = None
+                free_print(f"{Fore.LIGHTMAGENTA_EX}[!]{Style.RESET_ALL} " + 'Skipping Proxy as Connection Issue Have you entered it in the correct format?')
+                self.driver = webdriver.Chrome(options = options,executable_path = ChromeDriverManager().install())
+        else:
+            self.timezone = None
+            self.driver = webdriver.Chrome(options = options,executable_path = ChromeDriverManager().install())
         self.email= email
         self.username = username
         self.password = password
+        
 
 
     def register(self):
+        if self.timezone:
+            self.driver.execute_cdp_cmd('Emulation.setTimezoneOverride', self.tz_params)
         self.driver.get('https://discord.com/register')
 
         free_print(f"{Fore.LIGHTMAGENTA_EX}[!]{Style.RESET_ALL} Webdriver wait")
@@ -102,7 +155,7 @@ class DiscordGen:
             dateWorking = False
 
         if dateWorking:
-            actions = ActionChains(self.driver)
+            """actions = ActionChains(self.driver)
 
             actions.send_keys(str(random.randint(1,12)))# Month
             actions.send_keys(Keys.ENTER)
@@ -112,8 +165,14 @@ class DiscordGen:
             random_year = [1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000]
 
             actions.send_keys(str(random.choice(random_year))) #Year
-            actions.perform()
-
+            actions.perform()"""
+            month,day,year = generate_random_date()
+            self.driver.find_element_by_id('react-select-2-input').send_keys(month)
+            self.driver.find_element_by_id('react-select-2-input').send_keys(Keys.ENTER)
+            self.driver.find_element_by_id('react-select-3-input').send_keys(day)
+            self.driver.find_element_by_id('react-select-3-input').send_keys(Keys.ENTER)
+            self.driver.find_element_by_id('react-select-4-input').send_keys(year)
+            self.driver.find_element_by_id('react-select-4-input').send_keys(Keys.ENTER)
             #Submit form
             try: 
                 self.driver.find_element_by_class_name('inputDefault-3JxKJ2').click() # Agree to terms and conditions
@@ -229,8 +288,18 @@ def worker(proxy=None):
     password = password_gen()
 
     lock.acquire()
-    with open('output/login.txt', 'a', encoding='UTF-8') as login_file:
-        login_file.write(new_email + ':' + password +'\n')      
+    try:
+        with open('output/login.txt', 'a', encoding='UTF-8') as login_file:
+            login_file.write(new_email + ':' + password +'\n')      
+    except:
+        out_folder = os.path.exists('output')
+        if out_folder:
+            with open('output/login.txt','w', encoding='UTF-8') as login_file:
+                login_file.write(new_email + ':' + password +'\n')
+        else:
+            os.mkdir('output')
+            with open('output/login.txt','w', encoding='UTF-8') as login_file:
+                login_file.write(new_email + ':' + password +'\n')
     lock.release()
 
     if not proxy:

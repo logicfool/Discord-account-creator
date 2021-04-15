@@ -1,0 +1,10 @@
+April 15:
+    - Fixed Date input issue
+    - Added support to be used on different OS'es(Linux,Win,Mac)
+    - Changed Webdriver Provider
+    - Fixed some file creation issues
+    - Added support for Socks Proxy and addded auth support(Changed Selenium Webdriver provider)
+        - Make sure to provide full proxy url for eg:
+            https://proxyusername:proxypass@proxyhost:proxyport
+            socks5://proxyusername:proxypass@proxyhost:proxyport
+    
